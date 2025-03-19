@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex flex-row lp-2">
-    <input type="text" placeholder="Search by name" name="search_by_name" v-model="token"
-           @input="setSearch">
+    <input type="text" placeholder="Search by name, email" name="search_by_name" v-model="token"
+           @input="setSearch(1, limit)">
     <button class="btn btn-info" @click="fetchUserDetails(1, limit)">Search</button>
   </div>
   <table class="table table-striped table-bordered table-responsive-lg">
@@ -16,8 +16,8 @@
       </tr>
     </thead>
     <tbody>
-    <tr v-for="user in users" :key="user.id">
-      <td>{{ user.id }}</td>
+    <tr v-for="(user, index) in users" :key="user.id">
+      <td>{{ (page - 1) * limit + index + 1 }}</td>
       <td>{{ user.first_name }}</td>
       <td>{{ user.last_name }}</td>
       <td>{{ user.email }}</td>
@@ -41,20 +41,22 @@ export default {
       page: 1,
       limit: 15,
       total: 0,
-      search_by_name: ''
+      search_key: '',
     };
   },
   methods: {
-    setSearch()
+    setSearch(page, limit)
     {
       if (this.token) {
-        this.search_by_name = this.token;
+        this.search_key = this.token;
+        this.page = page;
+        this.limit = limit;
       }
     },
     async fetchUserDetails(page = 1, limit = 15) {
       try {
         this.limit = limit;
-        const response = await axios.get(`http://localhost:3000/users?page=${page}&limit=${this.limit}&first_name=${this.search_by_name}`, {
+        const response = await axios.get(`http://localhost:3000/users?page=${page}&limit=${this.limit}&search_key=${this.search_key}`, {
           headers: {
             authorization:'J23HRGVB2EREBWN',
           }
@@ -63,7 +65,7 @@ export default {
         this.users = res.data;
         this.total = res.total;
         this.page = res.page;
-        this.limit = res.limit;
+        this.limit = limit;
 
       } catch (error) {
         console.error('Error fetching user details:', error);
